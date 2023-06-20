@@ -1,15 +1,12 @@
-const Card = require("../models/card.js");
+const Card = require('../models/card');
 
-const getCards = (req, res) => {
-  console.log("getCards");
-  return Card.find({})
-    .then((cards) => res.status(200).send(cards))
-    .catch((err) => {
-      res.status(500).send({
-        message: "Что-то пошло не так",
-      });
+const getCards = (req, res) => Card.find({})
+  .then((cards) => res.status(200).send(cards))
+  .catch(() => {
+    res.status(500).send({
+      message: 'Что-то пошло не так',
     });
-};
+  });
 
 const createCard = (req, res) => {
   const newCardData = req.body;
@@ -18,58 +15,55 @@ const createCard = (req, res) => {
   return Card.create({ ...newCardData, owner: newCardOwner })
     .then((newCard) => res.status(200).send(newCard))
     .catch((err) => {
-      if (err.name === "ValidationError") {
+      if (err.name === 'ValidationError') {
         return res.status(400).send({
           message: Object.values(err.errors)
-            .map((err) => err.message)
-            .join(", "),
+            .map(() => err.message)
+            .join(', '),
         });
       }
 
-      res.status(500).send({
-        message: "Что-то пошло не так.",
+      return res.status(500).send({
+        message: 'Что-то пошло не так.',
       });
     });
 };
 
 const removeCardById = (req, res) => {
-  console.log("removeCardById");
   const { cardId } = req.params;
   return Card.findByIdAndDelete(cardId)
     .then((removedCard) => {
       if (!removedCard) {
-        return res.status(404).send({
-          message: "Запрашиваемая карточка не найдена",
+        return res.status(400).send({
+          message: 'Запрашиваемая карточка не найдена',
         });
       }
       return res.status(200).send(removedCard);
     })
-    .catch((err) => {
+    .catch(() => {
       res.status(500).send({
-        message: "Что-то пошло не так.",
+        message: 'Что-то пошло не так.',
       });
     });
 };
 
 const putCardLike = (req, res) => {
-  console.log("putCardLike");
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
-    { new: true }
+    { new: true },
   )
     .then((newCard) => {
       if (!newCard) {
-        return res.status(404).send({
-          message: "Запрашиваемая карточка не найдена",
+        return res.status(400).send({
+          message: 'Запрашиваемая карточка не найдена',
         });
       }
       return res.status(200).send(newCard);
     })
-    .catch((err) => {
-      console.log(err.message);
+    .catch(() => {
       res.status(500).send({
-        message: "Что-то пошло не так.",
+        message: 'Что-то пошло не так.',
       });
     });
 };
@@ -78,20 +72,19 @@ const removeCardLike = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
-    { new: true }
+    { new: true },
   )
     .then((newCard) => {
       if (!newCard) {
-        return res.status(404).send({
-          message: "Запрашиваемая карточка не найдена",
+        return res.status(400).send({
+          message: 'Запрашиваемая карточка не найдена',
         });
       }
       return res.status(200).send(newCard);
     })
-    .catch((err) => {
-      console.log(err.message);
+    .catch(() => {
       res.status(500).send({
-        message: "Что-то пошло не так.",
+        message: 'Что-то пошло не так.',
       });
     });
 };
