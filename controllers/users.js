@@ -13,14 +13,19 @@ const getUserById = (req, res) => {
   return User.findById(userId)
     .then((user) => {
       if (!user) {
-        return res.status(400).send({
+        return res.status(404).send({
           message: 'Запрашиваемый пользователь не найден',
         });
       }
       return res.status(200).send(user);
     })
     .catch(() => {
-      res.status(500).send({
+      if (userId.length !== 12) {
+        return res.status(400).send({
+          message: 'Некорректный ID',
+        });
+      }
+      return res.status(500).send({
         message: 'Что-то пошло не так.',
       });
     });

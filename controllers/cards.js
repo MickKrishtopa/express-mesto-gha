@@ -34,14 +34,19 @@ const removeCardById = (req, res) => {
   return Card.findByIdAndDelete(cardId)
     .then((removedCard) => {
       if (!removedCard) {
-        return res.status(400).send({
+        return res.status(404).send({
           message: 'Запрашиваемая карточка не найдена',
         });
       }
       return res.status(200).send(removedCard);
     })
     .catch(() => {
-      res.status(500).send({
+      if (cardId.length !== 12) {
+        return res.status(400).send({
+          message: 'Некорректный ID',
+        });
+      }
+      return res.status(500).send({
         message: 'Что-то пошло не так.',
       });
     });
@@ -55,14 +60,19 @@ const putCardLike = (req, res) => {
   )
     .then((newCard) => {
       if (!newCard) {
-        return res.status(400).send({
+        return res.status(404).send({
           message: 'Запрашиваемая карточка не найдена',
         });
       }
       return res.status(200).send(newCard);
     })
     .catch(() => {
-      res.status(500).send({
+      if (req.params.cardId.length !== 12) {
+        return res.status(400).send({
+          message: 'Некорректный ID',
+        });
+      }
+      return res.status(500).send({
         message: 'Что-то пошло не так.',
       });
     });
@@ -76,14 +86,19 @@ const removeCardLike = (req, res) => {
   )
     .then((newCard) => {
       if (!newCard) {
-        return res.status(400).send({
+        return res.status(404).send({
           message: 'Запрашиваемая карточка не найдена',
         });
       }
       return res.status(200).send(newCard);
     })
     .catch(() => {
-      res.status(500).send({
+      if (req.params.cardId.length !== 12) {
+        return res.status(400).send({
+          message: 'Некорректный ID',
+        });
+      }
+      return res.status(500).send({
         message: 'Что-то пошло не так.',
       });
     });
