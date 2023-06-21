@@ -1,5 +1,6 @@
 const statusCodes = require('http').STATUS_CODES;
 const httpConstants = require('http2').constants;
+const mongoose = require('mongoose');
 
 const User = require('../models/user');
 
@@ -22,7 +23,7 @@ const getUserById = (req, res) => {
           message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-      if (err.name === 'CastError') {
+      if (err instanceof mongoose.Error.CastError) {
         return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: `${statusCodes[httpConstants.HTTP_STATUS_BAD_REQUEST]}, invalid ID`,
         });
@@ -39,7 +40,7 @@ const createUser = (req, res) => {
   return User.create(newUserData)
     .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send(user))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err instanceof mongoose.Error.ValidationError) {
         return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: Object.values(err.errors)
             .map((error) => error.message)
@@ -69,7 +70,7 @@ const updateUserDataByID = (req, res, newUserData) => {
           message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-      if (err.name === 'ValidationError') {
+      if (err instanceof mongoose.Error.ValidationError) {
         return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: Object.values(err.errors)
             .map((error) => error.message)

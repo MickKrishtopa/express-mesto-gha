@@ -1,5 +1,6 @@
 const statusCodes = require('http').STATUS_CODES;
 const httpConstants = require('http2').constants;
+const mongoose = require('mongoose');
 
 const Card = require('../models/card');
 
@@ -18,7 +19,7 @@ const createCard = (req, res) => {
   return Card.create({ ...newCardData, owner: newCardOwner })
     .then((newCard) => res.status(httpConstants.HTTP_STATUS_CREATED).send(newCard))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err instanceof mongoose.Error.ValidationError) {
         return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: Object.values(err.errors)
             .map(() => err.message)
@@ -43,7 +44,7 @@ const removeCardById = (req, res) => {
           message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-      if (err.name === 'CastError') {
+      if (err instanceof mongoose.Error.CastError) {
         return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: `${statusCodes[httpConstants.HTTP_STATUS_BAD_REQUEST]}, Invalid ID`,
         });
@@ -68,7 +69,7 @@ const putCardLike = (req, res) => {
           message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-      if (err.name === 'CastError') {
+      if (err instanceof mongoose.Error.CastError) {
         return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: `${statusCodes[httpConstants.HTTP_STATUS_BAD_REQUEST]}, Invalid ID`,
         });
@@ -93,7 +94,7 @@ const removeCardLike = (req, res) => {
           message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-      if (err.name === 'CastError') {
+      if (err instanceof mongoose.Error.CastError) {
         return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: `${statusCodes[httpConstants.HTTP_STATUS_BAD_REQUEST]}, Invalid ID`,
         });
