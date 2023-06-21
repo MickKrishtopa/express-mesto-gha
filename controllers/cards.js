@@ -1,10 +1,13 @@
+const statusCodes = require('http').STATUS_CODES;
+const httpConstants = require('http2').constants;
+
 const Card = require('../models/card');
 
 const getCards = (req, res) => Card.find({})
-  .then((cards) => res.status(200).send(cards))
+  .then((cards) => res.status(httpConstants.HTTP_STATUS_OK).send(cards))
   .catch(() => {
-    res.status(500).send({
-      message: 'Что-то пошло не так',
+    res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+      message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
     });
   });
 
@@ -13,18 +16,18 @@ const createCard = (req, res) => {
   const newCardOwner = req.user._id;
 
   return Card.create({ ...newCardData, owner: newCardOwner })
-    .then((newCard) => res.status(200).send(newCard))
+    .then((newCard) => res.status(httpConstants.HTTP_STATUS_CREATED).send(newCard))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({
+        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: Object.values(err.errors)
             .map(() => err.message)
             .join(', '),
         });
       }
 
-      return res.status(500).send({
-        message: 'Что-то пошло не так.',
+      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
       });
     });
 };
@@ -32,22 +35,21 @@ const createCard = (req, res) => {
 const removeCardById = (req, res) => {
   const { cardId } = req.params;
   return Card.findByIdAndDelete(cardId)
-    .then((removedCard) => {
-      if (!removedCard) {
-        return res.status(404).send({
-          message: 'Запрашиваемая карточка не найдена',
+    .orFail(new Error('CardNotFound'))
+    .then((removedCard) => res.status(httpConstants.HTTP_STATUS_OK).send(removedCard))
+    .catch((err) => {
+      if (err.message === 'CardNotFound') {
+        return res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({
+          message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-      return res.status(200).send(removedCard);
-    })
-    .catch(() => {
-      if (cardId.length !== 12) {
-        return res.status(400).send({
-          message: 'Некорректный ID',
+      if (err.name === 'CastError') {
+        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
+          message: `${statusCodes[httpConstants.HTTP_STATUS_BAD_REQUEST]}, Invalid ID`,
         });
       }
-      return res.status(500).send({
-        message: 'Что-то пошло не так.',
+      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
       });
     });
 };
@@ -58,22 +60,21 @@ const putCardLike = (req, res) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((newCard) => {
-      if (!newCard) {
-        return res.status(404).send({
-          message: 'Запрашиваемая карточка не найдена',
+    .orFail(new Error('CardNotFound'))
+    .then((newCard) => res.status(httpConstants.HTTP_STATUS_OK).send(newCard))
+    .catch((err) => {
+      if (err.message === 'CardNotFound') {
+        return res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({
+          message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-      return res.status(200).send(newCard);
-    })
-    .catch(() => {
-      if (req.params.cardId.length !== 12) {
-        return res.status(400).send({
-          message: 'Некорректный ID',
+      if (err.name === 'CastError') {
+        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
+          message: `${statusCodes[httpConstants.HTTP_STATUS_BAD_REQUEST]}, Invalid ID`,
         });
       }
-      return res.status(500).send({
-        message: 'Что-то пошло не так.',
+      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
       });
     });
 };
@@ -84,22 +85,21 @@ const removeCardLike = (req, res) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((newCard) => {
-      if (!newCard) {
-        return res.status(404).send({
-          message: 'Запрашиваемая карточка не найдена',
+    .orFail(new Error('CardNotFound'))
+    .then((newCard) => res.status(httpConstants.HTTP_STATUS_OK).send(newCard))
+    .catch((err) => {
+      if (err.message === 'CardNotFound') {
+        return res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({
+          message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-      return res.status(200).send(newCard);
-    })
-    .catch(() => {
-      if (req.params.cardId.length !== 12) {
-        return res.status(400).send({
-          message: 'Некорректный ID',
+      if (err.name === 'CastError') {
+        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
+          message: `${statusCodes[httpConstants.HTTP_STATUS_BAD_REQUEST]}, Invalid ID`,
         });
       }
-      return res.status(500).send({
-        message: 'Что-то пошло не так.',
+      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
       });
     });
 };

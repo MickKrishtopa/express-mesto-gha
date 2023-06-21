@@ -1,32 +1,34 @@
+const statusCodes = require('http').STATUS_CODES;
+const httpConstants = require('http2').constants;
+
 const User = require('../models/user');
 
 const getUsers = (req, res) => User.find({})
-  .then((users) => res.status(200).send(users))
+  .then((users) => res.status(httpConstants.HTTP_STATUS_OK).send(users))
   .catch(() => {
-    res.status(500).send({
-      message: 'Что-то пошло не так',
+    res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+      message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
     });
   });
 
 const getUserById = (req, res) => {
   const { userId } = req.params;
   return User.findById(userId)
-    .then((user) => {
-      if (!user) {
-        return res.status(404).send({
-          message: 'Запрашиваемый пользователь не найден',
+    .orFail(new Error('UserNotFound'))
+    .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
+    .catch((err) => {
+      if (err.message === 'UserNotFound') {
+        return res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({
+          message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-      return res.status(200).send(user);
-    })
-    .catch(() => {
-      if (userId.length !== 12) {
-        return res.status(400).send({
-          message: 'Некорректный ID',
+      if (err.name === 'CastError') {
+        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
+          message: `${statusCodes[httpConstants.HTTP_STATUS_BAD_REQUEST]}, invalid ID`,
         });
       }
-      return res.status(500).send({
-        message: 'Что-то пошло не так.',
+      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
       });
     });
 };
@@ -35,82 +37,65 @@ const createUser = (req, res) => {
   const newUserData = req.body;
 
   return User.create(newUserData)
-    .then((user) => res.status(201).send(user))
+    .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({
+        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: Object.values(err.errors)
             .map((error) => error.message)
             .join(', '),
         });
       }
 
-      return res.status(500).send({
-        message: 'Что-то пошло не так.',
+      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
       });
     });
 };
 
-const changeUserById = (req, res) => {
+const updateUserDataByID = (req, res, newUserData) => {
   const userId = req.user._id;
-  const newUserData = req.body;
+  console.log(newUserData);
 
   return User.findByIdAndUpdate(userId, newUserData, {
     new: true,
     runValidators: true,
   })
-    .then((updateUserData) => {
-      if (!updateUserData) {
-        return res.status(404).send({
-          message: 'Запрашиваемый пользователь не найден',
+    .orFail(new Error('UserNotFound'))
+    .then((updateUserData) => res.status(httpConstants.HTTP_STATUS_OK).send(updateUserData))
+    .catch((err) => {
+      if (err.message === 'UserNotFound') {
+        return res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({
+          message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
         });
       }
-
-      return res.status(200).send(updateUserData);
-    })
-    .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({
+        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: Object.values(err.errors)
             .map((error) => error.message)
             .join(', '),
         });
       }
 
-      return res.status(500).send({
-        message: 'Что-то пошло не так.',
+      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
       });
     });
 };
+
+const changeUserById = (req, res) => {
+  const newUserData = {
+    name: req.body.name,
+    about: req.body.about,
+  };
+  updateUserDataByID(req, res, newUserData);
+};
+
 const changeAvatarUserById = (req, res) => {
-  const userId = req.user._id;
-  const newAvatarUserLink = req.body;
-  return User.findByIdAndUpdate(userId, newAvatarUserLink, {
-    new: true,
-    runValidators: true,
-  })
-    .then((updateUserData) => {
-      if (!updateUserData) {
-        return res.status(404).send({
-          message: 'Запрашиваемый пользователь не найден',
-        });
-      }
-
-      return res.status(200).send(updateUserData);
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({
-          message: Object.values(err.errors)
-            .map((error) => error.message)
-            .join(', '),
-        });
-      }
-
-      return res.status(500).send({
-        message: 'Что-то пошло не так.',
-      });
-    });
+  const newUserData = {
+    avatar: req.body.avatar,
+  };
+  updateUserDataByID(req, res, newUserData);
 };
 
 module.exports = {
