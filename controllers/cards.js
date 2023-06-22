@@ -58,7 +58,7 @@ const removeCardById = (req, res) => {
 const toggleCardLike = (req, res, action) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    action,
+    { [action]: { likes: req.user._id } },
     { new: true },
   )
     .orFail(new Error('CardNotFound'))
@@ -81,11 +81,11 @@ const toggleCardLike = (req, res, action) => {
 };
 
 const putCardLike = (req, res) => {
-  toggleCardLike(req, res, { $addToSet: { likes: req.user._id } });
+  toggleCardLike(req, res, '$addToSet');
 };
 
 const removeCardLike = (req, res) => {
-  toggleCardLike(req, res, { $pull: { likes: req.user._id } });
+  toggleCardLike(req, res, '$pull');
 };
 
 module.exports = {
