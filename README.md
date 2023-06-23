@@ -1,5 +1,8 @@
 [![Tests](../../actions/workflows/tests-13-sprint.yml/badge.svg)](../../actions/workflows/tests-13-sprint.yml) [![Tests](../../actions/workflows/tests-14-sprint.yml/badge.svg)](../../actions/workflows/tests-14-sprint.yml)
 # Проект Mesto фронтенд + бэкенд
+Учебный проект в рамках обучения в школе [Яндекс Практикум](https://practicum.yandex.ru/). </br>
+
+
 
 
 ## Директории
@@ -16,3 +19,11 @@
 `npm run dev` — запускает сервер с hot-reload
 
 Ссылка на [репозиторий](https://github.com/MickKrishtopa/express-mesto-gha)
+
+## Функциональный стек
+- Express
+- Mongoose
+
+
+
+
