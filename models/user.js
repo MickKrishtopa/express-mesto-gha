@@ -1,4 +1,8 @@
 const mongoose = require('mongoose');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const validator = require('validator');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -6,17 +10,52 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 2,
     maxlength: 30,
+    role: { type: String, default: 'Жак-Ив Кусто' },
   },
   about: {
     type: String,
     required: true,
     minlength: 2,
     maxlength: 30,
+    role: { type: String, default: 'Исследователь' },
   },
   avatar: {
     type: String,
-    required: true,
+    default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+
   },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: {
+      validator: (string) => validator.isEmail(string),
+      message: 'Email is not a valid!',
+    },
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 8,
+  },
+
 });
+
+userSchema.statics.findUserByCredentials = function (email, password) {
+  return this.findOne({ email })
+    .then((user) => {
+      if (!user) {
+        return Promise.reject(new Error('InvalidPasswordOrEmail'));
+      }
+
+      return bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            return Promise.reject(new Error('InvalidPasswordOrEmail'));
+          }
+          return user;
+        });
+    });
+};
 
 module.exports = mongoose.model('user', userSchema);
