@@ -4,11 +4,12 @@ const mongoose = require('mongoose');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const bcrypt = require('bcryptjs');
 // eslint-disable-next-line import/no-extraneous-dependencies
-const jwt = require('jsonwebtoken');
 
 const User = require('../models/user');
+const { generateToken } = require('../utils/jwt');
 // console.log(statusCodes);
 // console.log(httpConstants);
+
 const getUsers = (req, res) => User.find({})
   .then((users) => res.status(httpConstants.HTTP_STATUS_OK).send(users))
   .catch(() => {
@@ -74,7 +75,7 @@ const createUser = (req, res) => {
 
 function updateUserDataByID(req, res, newUserData) {
   const userId = req.user._id;
-  console.log(newUserData);
+  console.log('New user', newUserData);
 
   return User.findByIdAndUpdate(userId, newUserData, {
     new: true,
@@ -124,8 +125,8 @@ const login = (req, res) => {
 
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'secretCode!', { expiresIn: '7d' });
-      return res.status(httpConstants.HTTP_STATUS_OK).send(token);
+      const token = generateToken(user._id);
+      return res.status(httpConstants.HTTP_STATUS_OK).send({ jwt: token });
     })
     .catch((err) => {
       if (err.message === 'InvalidPasswordOrEmail') {

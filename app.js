@@ -11,10 +11,13 @@ mongoose
     useNewUrlParser: true,
   })
   .then(() => {
+    // eslint-disable-next-line
     console.log('Connected to BD');
   })
   .catch((err) => {
+    // eslint-disable-next-line
     console.log('Fail connected to BD');
+    // eslint-disable-next-line
     console.log(err.message);
   });
 
@@ -35,5 +38,6 @@ app.use(bodyParser.json());
 app.use(routes);
 
 app.listen(PORT, () => {
+  // eslint-disable-next-line
   console.log(`App listening on port ${PORT}`);
 });
