@@ -23,13 +23,13 @@ mongoose
 
 const app = express();
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '249180734c899be0396963fd',
-  };
+// app.use((req, res, next) => {
+//   req.user = {
+//     _id: '249180734c899be0396963fd',
+//   };
 
-  next();
-});
+//   next();
+// });
 
 app.use(express.static(path.join(__dirname, 'public')));
 

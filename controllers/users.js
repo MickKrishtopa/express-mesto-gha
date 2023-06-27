@@ -67,6 +67,12 @@ const createUser = (req, res) => {
         });
       }
 
+      if (err.name === 'MongoServerError') {
+        return res.status(httpConstants.HTTP_STATUS_CONFLICT).send({
+          message: `User already registered. ${statusCodes[httpConstants.HTTP_STATUS_CONFLICT]}`,
+        });
+      }
+
       return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
         message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
       });
@@ -149,6 +155,10 @@ const login = (req, res) => {
     });
 };
 
+const getUserInfo = (req, res) => User.findById(req.user._id)
+  .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
+  .catch((err) => console.log(err));
+
 module.exports = {
   getUsers,
   getUserById,
@@ -156,4 +166,5 @@ module.exports = {
   changeUserById,
   changeAvatarUserById,
   login,
+  getUserInfo,
 };

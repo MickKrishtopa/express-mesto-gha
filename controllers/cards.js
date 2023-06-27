@@ -35,9 +35,18 @@ const createCard = (req, res) => {
 
 const removeCardById = (req, res) => {
   const { cardId } = req.params;
-  return Card.findByIdAndDelete(cardId)
+  return Card.findById(cardId)
     .orFail(new Error('CardNotFound'))
-    .then((removedCard) => res.status(httpConstants.HTTP_STATUS_OK).send(removedCard))
+    .then((card) => {
+      if (card && card.owner.valueOf() !== req.user._id) {
+        return res.status(httpConstants.HTTP_STATUS_FORBIDDEN).send({
+          message: statusCodes[httpConstants.HTTP_STATUS_FORBIDDEN],
+        });
+      }
+
+      return Card.findByIdAndDelete(cardId)
+        .then((removedCard) => res.status(httpConstants.HTTP_STATUS_OK).send(removedCard));
+    })
     .catch((err) => {
       if (err.message === 'CardNotFound') {
         return res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({

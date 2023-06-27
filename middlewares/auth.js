@@ -13,8 +13,8 @@ const auth = (req, res, next) => {
           message: `${statusCodes[httpConstants.HTTP_STATUS_UNAUTHORIZED]}`,
         });
       }
-
-      req.user = check;
+      req.user = { _id: check.id };
+      console.log('Запрос от юзера с ID:', req.user._id);
       next();
     });
   } catch (err) {
