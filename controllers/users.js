@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const bcrypt = require('bcryptjs');
 // eslint-disable-next-line import/no-extraneous-dependencies
-
 const User = require('../models/user');
 const { generateToken } = require('../utils/jwt');
 // console.log(statusCodes);
@@ -57,7 +56,16 @@ const createUser = (req, res) => {
       email,
       password: hash,
     }))
-    .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send(user))
+    .then((user) => {
+      console.log('USER:', user);
+      const publicUseData = {
+        name: user.name,
+        about: user.about,
+        _id: user._id,
+        avatar: user.avatar,
+        email: user.email,
+      };
+      return res.status(httpConstants.HTTP_STATUS_CREATED).send(publicUseData)})
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
         return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
