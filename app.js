@@ -1,8 +1,12 @@
+/* eslint-disable no-console */
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const path = require('path');
+const { errors } = require('celebrate');
+
 const routes = require('./routes/routes');
+const { errorHandler } = require('./middlewares/errorHandler');
 
 const { PORT = 3000 } = process.env;
 
@@ -11,25 +15,14 @@ mongoose
     useNewUrlParser: true,
   })
   .then(() => {
-    // eslint-disable-next-line
     console.log('Connected to BD');
   })
   .catch((err) => {
-    // eslint-disable-next-line
     console.log('Fail connected to BD');
-    // eslint-disable-next-line
     console.log(err.message);
   });
 
 const app = express();
-
-// app.use((req, res, next) => {
-//   req.user = {
-//     _id: '249180734c899be0396963fd',
-//   };
-
-//   next();
-// });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -37,7 +30,9 @@ app.use(bodyParser.json());
 
 app.use(routes);
 
+app.use(errors());
+app.use(errorHandler);
+
 app.listen(PORT, () => {
-  // eslint-disable-next-line
   console.log(`App listening on port ${PORT}`);
 });

@@ -1,4 +1,3 @@
-const statusCodes = require('http').STATUS_CODES;
 const httpConstants = require('http2').constants;
 const mongoose = require('mongoose');
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -6,40 +5,33 @@ const bcrypt = require('bcryptjs');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const User = require('../models/user');
 const { generateToken } = require('../utils/jwt');
+const NotFoundError = require('../errors/NotFoundError');
+const BadRequestError = require('../errors/BadRequestError');
+const ValidationError = require('../errors/ValidationError');
+const ConflictError = require('../errors/ConflictError');
+
 // console.log(statusCodes);
 // console.log(httpConstants);
 
-const getUsers = (req, res) => User.find({})
+const getUsers = (req, res, next) => User.find({})
   .then((users) => res.status(httpConstants.HTTP_STATUS_OK).send(users))
-  .catch(() => {
-    res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-      message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
-    });
-  });
+  .catch(next);
 
-const getUserById = (req, res) => {
+const getUserById = (req, res, next) => {
   const { userId } = req.params;
   return User.findById(userId)
-    .orFail(new Error('UserNotFound'))
+    .orFail(new NotFoundError())
     .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
     .catch((err) => {
-      if (err.message === 'UserNotFound') {
-        return res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({
-          message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
-        });
-      }
       if (err instanceof mongoose.Error.CastError) {
-        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
-          message: `${statusCodes[httpConstants.HTTP_STATUS_BAD_REQUEST]}, invalid ID`,
-        });
+        return next(new BadRequestError());
       }
-      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
-      });
+
+      return next(err);
     });
 };
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const {
     name,
     about,
@@ -57,7 +49,6 @@ const createUser = (req, res) => {
       password: hash,
     }))
     .then((user) => {
-      console.log('USER:', user);
       const publicUseData = {
         name: user.name,
         about: user.about,
@@ -65,107 +56,71 @@ const createUser = (req, res) => {
         avatar: user.avatar,
         email: user.email,
       };
-      return res.status(httpConstants.HTTP_STATUS_CREATED).send(publicUseData)})
+      return res.status(httpConstants.HTTP_STATUS_CREATED).send(publicUseData);
+    })
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
-          message: Object.values(err.errors)
-            .map((error) => error.message)
-            .join(', '),
-        });
+        return next(new ValidationError(Object.values(err.errors)
+          .map((error) => error.message)
+          .join(', ')));
       }
 
       if (err.name === 'MongoServerError') {
-        return res.status(httpConstants.HTTP_STATUS_CONFLICT).send({
-          message: `User already registered. ${statusCodes[httpConstants.HTTP_STATUS_CONFLICT]}`,
-        });
+        return next(new ConflictError('User already created'));
       }
-
-      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
-      });
+      return next(err);
     });
 };
 
-function updateUserDataByID(req, res, newUserData) {
+function updateUserDataByID(req, res, next, newUserData) {
   const userId = req.user._id;
-  console.log('New user', newUserData);
 
   return User.findByIdAndUpdate(userId, newUserData, {
     new: true,
     runValidators: true,
   })
-    .orFail(new Error('UserNotFound'))
+    .orFail(new NotFoundError())
     .then((updateUserData) => res.status(httpConstants.HTTP_STATUS_OK).send(updateUserData))
     .catch((err) => {
-      if (err.message === 'UserNotFound') {
-        return res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({
-          message: `${statusCodes[httpConstants.HTTP_STATUS_NOT_FOUND]}`,
-        });
-      }
-
       if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
-          message: Object.values(err.errors)
-            .map((error) => error.message)
-            .join(', '),
-        });
+        return next(new ValidationError(Object.values(err.errors)
+          .map((error) => error.message)
+          .join(', ')));
       }
 
-      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
-      });
+      return next(err);
     });
 }
 
-const changeUserById = (req, res) => {
+const changeUserById = (req, res, next) => {
   const newUserData = {
     name: req.body.name,
     about: req.body.about,
   };
-  updateUserDataByID(req, res, newUserData);
+  updateUserDataByID(req, res, next, newUserData);
 };
 
-const changeAvatarUserById = (req, res) => {
+const changeAvatarUserById = (req, res, next) => {
   const newUserData = {
     avatar: req.body.avatar,
   };
-  updateUserDataByID(req, res, newUserData);
+  updateUserDataByID(req, res, next, newUserData);
 };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
-  console.log(email, password);
 
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = generateToken(user._id);
       return res.status(httpConstants.HTTP_STATUS_OK).send({ jwt: token });
     })
-    .catch((err) => {
-      if (err.message === 'InvalidPasswordOrEmail') {
-        return res.status(httpConstants.HTTP_STATUS_UNAUTHORIZED).send({
-          message: `Invalid password or email. ${statusCodes[httpConstants.HTTP_STATUS_UNAUTHORIZED]}`,
-        });
-      }
-
-      if (err instanceof mongoose.Error.ValidationError) {
-        return res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
-          message: Object.values(err.errors)
-            .map((error) => error.message)
-            .join(', '),
-        });
-      }
-
-      return res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-        message: `${statusCodes[httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR]}`,
-      });
-    });
+    .catch(next);
 };
 
-const getUserInfo = (req, res) => User.findById(req.user._id)
+const getUserInfo = (req, res, next) => User.findById(req.user._id)
   .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
-  .catch((err) => console.log(err));
+  .catch(next);
 
 module.exports = {
   getUsers,

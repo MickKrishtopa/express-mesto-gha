@@ -1,27 +1,19 @@
 /* eslint-disable consistent-return */
-const statusCodes = require('http').STATUS_CODES;
-const httpConstants = require('http2').constants;
 const { verifyToken } = require('../utils/jwt');
 
 const auth = (req, res, next) => {
   const { authorization } = req.headers;
 
-  try {
-    return verifyToken(authorization).then((check) => {
-      if (!check) {
-        return res.status(httpConstants.HTTP_STATUS_UNAUTHORIZED).send({
-          message: `${statusCodes[httpConstants.HTTP_STATUS_UNAUTHORIZED]}`,
-        });
-      }
+  return verifyToken(authorization)
+    .then((check) => {
       req.user = { _id: check.id };
+      // eslint-disable-next-line no-console
       console.log('Запрос от юзера с ID:', req.user._id);
       next();
+    })
+    .catch((err) => {
+      next(err);
     });
-  } catch (err) {
-    return res.status(httpConstants.HTTP_STATUS_UNAUTHORIZED).send({
-      message: `${statusCodes[httpConstants.HTTP_STATUS_UNAUTHORIZED]}`,
-    });
-  }
 };
 
 module.exports = { auth };
