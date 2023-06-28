@@ -5,6 +5,8 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const AuthorizationError = require('../errors/AuthorizationError');
 
+const regexUrlAvatar = /^((ftp|http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9\-]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-\/])*)?/;
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -22,6 +24,10 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
+    validate: {
+      validator: (string) => regexUrlAvatar.test(string),
+      message: 'URL is not a valid!',
+    },
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
 
   },
