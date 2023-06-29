@@ -8,7 +8,7 @@ const createUserValidation = celebrate({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
     avatar: Joi.string().pattern(regexUrlAvatar),
-    email: Joi.string().required().min(2).max(30).email(),
+    email: Joi.string().email().required(),
     password: Joi.string().required().min(8),
   }),
 });
