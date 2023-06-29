@@ -1,8 +1,6 @@
 const httpConstants = require('http2').constants;
 const mongoose = require('mongoose');
-// eslint-disable-next-line import/no-extraneous-dependencies
 const bcrypt = require('bcryptjs');
-// eslint-disable-next-line import/no-extraneous-dependencies
 const User = require('../models/user');
 const { generateToken } = require('../utils/jwt');
 const NotFoundError = require('../errors/NotFoundError');

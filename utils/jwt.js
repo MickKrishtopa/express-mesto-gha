@@ -8,7 +8,6 @@ const verifyToken = (token) => jwt.verify(token, JWT_SECRET, (err, encoded) => {
   if (err) {
     return false;
   }
-  console.log(encoded);
   return encoded;
 });
 

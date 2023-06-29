@@ -2,9 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const AuthorizationError = require('../errors/AuthorizationError');
-
-// eslint-disable-next-line
-const regexUrlAvatar = /^((https?):\/\/)(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9\-]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-\/])*)?/;
+const regexUrlAvatar = require('../utils/constants');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -42,7 +40,6 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    minlength: 8,
     select: false,
   },
 

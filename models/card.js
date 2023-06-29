@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
-
-// eslint-disable-next-line
-const regexUrlAvatar = /^((https?):\/\/)(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9\-]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-\/])*)?/;
+const regexUrlAvatar = require('../utils/constants');
 
 const cardSchema = new mongoose.Schema({
   name: {
